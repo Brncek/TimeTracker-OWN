@@ -1,0 +1,63 @@
+﻿<Window x:Class="TimeTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimeTracker"
+        mc:Ignorable="d"
+        Title="WorkTimer" Height="450" Width="900" Closing="Window_Closing">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="250"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <GroupBox Margin="10" Grid.Column="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                
+                <StackPanel Orientation="Vertical">
+                    <Label FontSize="25" x:Name="TimerLabel" >Time: 00:00:00</Label>
+                </StackPanel>
+
+                <StackPanel Orientation="Vertical" Grid.Row="1">
+                    <Button Margin="5" x:Name="StartBT" Click="StartBT_Click">Start</Button>
+                    <Button Margin="5" x:Name="PauseBT" IsEnabled="False" Click="PauseBT_Click">Pause</Button>
+                    <Button Margin="5" x:Name="StopBT" IsEnabled="False" Click="StopBT_Click">Stop</Button>
+                    <Button Margin="5" x:Name="DeleteBT" IsEnabled="False" Click="DeleteBT_Click">Delete</Button>
+                </StackPanel>
+
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Margin="10" Grid.Column="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="40"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,7,5,3">
+                    <Label Margin="5,0">Start</Label>
+                    <DatePicker x:Name="ExportDateStart"/>
+                    <Label Margin="5,0">End</Label>
+                    <DatePicker x:Name="ExportDateEnd"/>
+                    <Button Margin="10,0"  Width="50" x:Name="ExportBT" Click="ExportBT_Click">Export</Button>
+                    <Button Margin="5,0"  Width="50" x:Name="ClearBT" Click="ClearBT_Click">ClearDB</Button>
+                </StackPanel>
+
+                <Separator Grid.Row="1"/>
+
+                <ScrollViewer Grid.Row="2">
+                    <StackPanel Orientation="Vertical"  x:Name="DataStack">
+                    </StackPanel>
+                </ScrollViewer>
+
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>
