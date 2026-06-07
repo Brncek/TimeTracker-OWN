@@ -236,7 +236,12 @@ namespace TimeTracker
             {
                 var infoline = new InfoLine(line, Reload, database.Delete);
                 DataStack.Children.Add(infoline);
-                DataStack.Children.Add(new Separator());
+
+                var separator = new Separator();
+
+                separator.Opacity = 0.25;
+
+                DataStack.Children.Add(separator);
             }
         }
 
