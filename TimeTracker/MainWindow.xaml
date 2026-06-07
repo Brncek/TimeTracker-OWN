@@ -38,21 +38,35 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="40"/>
                     <RowDefinition Height="10"/>
+                    <RowDefinition Height="40"/>
+                    <RowDefinition Height="10"/>
                     <RowDefinition/>
                 </Grid.RowDefinitions>
 
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="5,7,5,3">
-                    <Label Margin="5,0">Start</Label>
-                    <DatePicker x:Name="ExportDateStart"/>
-                    <Label Margin="5,0">End</Label>
-                    <DatePicker x:Name="ExportDateEnd"/>
+                    <Label Margin="5,0" Width="100" FontSize="14" VerticalAlignment="Center" FontWeight="Bold">Export</Label>
+                    <Label Margin="5,0" VerticalAlignment="Center">Start</Label>
+                    <DatePicker x:Name="ExportDateStart" VerticalAlignment="Center"/>
+                    <Label Margin="5,0" VerticalAlignment="Center">End</Label>
+                    <DatePicker x:Name="ExportDateEnd" VerticalAlignment="Center"/>
                     <Button Margin="10,0"  Width="50" x:Name="ExportBT" Click="ExportBT_Click">Export</Button>
                     <Button Margin="5,0"  Width="50" x:Name="ClearBT" Click="ClearBT_Click">ClearDB</Button>
                 </StackPanel>
 
-                <Separator Grid.Row="1"/>
+                <Separator Grid.Row="1" Opacity="0.25"/>
 
-                <ScrollViewer Grid.Row="2">
+                <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="5,7,5,3">
+                    <Label Margin="5,0" Width="100" FontSize="14" VerticalAlignment="Center" FontWeight="Bold">Add manualy</Label>
+                    <Label Margin="5,0" VerticalAlignment="Center">Start</Label>
+                    <DatePicker x:Name="ManualAddDate" VerticalAlignment="Center"/>
+                    <Label Margin="5,0" VerticalAlignment="Center">Time</Label>
+                    <TextBox x:Name="ManualAddTime" VerticalAlignment="Center" Width="96" Text="0.00"/>
+                    <Button Margin="10,0"  Width="50" x:Name="AddManual" Click="AddManual_Click">Add</Button>
+                </StackPanel>
+
+                <Separator Grid.Row="3"/>
+
+                <ScrollViewer Grid.Row="4">
                     <StackPanel Orientation="Vertical"  x:Name="DataStack">
                     </StackPanel>
                 </ScrollViewer>

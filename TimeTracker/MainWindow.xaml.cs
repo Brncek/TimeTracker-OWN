@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -237,6 +238,39 @@ namespace TimeTracker
                 DataStack.Children.Add(infoline);
                 DataStack.Children.Add(new Separator());
             }
+        }
+
+        private void AddManual_Click(object sender, RoutedEventArgs e)
+        {
+            var start = ManualAddDate.SelectedDate;
+
+            if (start == null)
+            {
+                MessageBox.Show("Please select start date !", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!double.TryParse(
+                    ManualAddTime.Text.Replace(",", "."),
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out double time))
+            {
+                MessageBox.Show("Please enter a valid time !", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (time <= 0)
+            {
+                MessageBox.Show("Time has to be positive !", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var end = start.Value.AddHours(time);
+
+            database.WriteTime(start.Value, end, end - start.Value );
+
+            Reload();
         }
     }
 
