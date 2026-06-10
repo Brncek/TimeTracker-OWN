@@ -10,7 +10,7 @@ namespace TimeTracker
     class TimesDatabase
     {
         private string dbFile = "Data.db";
-        private int actualCustomerId = 0;
+        private int actualCustomerId = 1;    
         private string actualName = "";
 
         public string GetActualName => actualName;
@@ -347,7 +347,7 @@ namespace TimeTracker
 	            name TEXT
             );
 
-            UPDATE TIMES SET cnum = 0;
+            UPDATE TIMES SET cnum = 1;
 
             INSERT INTO CUSTOMER(name) VALUES('DEFAULT');
         ";
