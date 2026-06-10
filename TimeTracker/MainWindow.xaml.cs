@@ -250,8 +250,14 @@ namespace TimeTracker
 
             var data = database.GetAll();
 
+            data.Reverse();
+
+            double sumTime = 0;
+
             foreach (var line in data)
             {
+                sumTime += line.TimeWorked.TotalHours;
+
                 var infoline = new InfoLine(line, Reload, database.Delete);
                 DataStack.Children.Add(infoline);
 
@@ -263,6 +269,7 @@ namespace TimeTracker
             }
 
             CustomerNameBox.Text = database.GetActualName;
+            TimeSumBox.Text = $"{sumTime.ToString("F2").Replace(",", ".")}";
         }
 
         private void AddManual_Click(object sender, RoutedEventArgs e)

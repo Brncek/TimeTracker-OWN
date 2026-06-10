@@ -182,7 +182,7 @@ namespace TimeTracker
             reader.Close();
             conn.Close();
 
-            return list;
+            return list.OrderBy(t => t.Start).ToList(); 
         }
 
         public List<CustomerInfo> GetCustomers()
