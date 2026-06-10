@@ -109,10 +109,22 @@ namespace TimeTracker
 
         private void StopBT_Click(object sender, RoutedEventArgs e)
         {
+
+            var res = MessageBox.Show("Are you sure ?", "Info", MessageBoxButton.OKCancel, MessageBoxImage.Information);
+            if (res != MessageBoxResult.OK)
+            {
+                return;
+            }
+
             var end = DateTime.Now;
 
             timeMutex.WaitOne();
 
+            if (pauseStart != null)
+            {
+                pauseTime += end - pauseStart;
+                pauseStart = null;
+            }
 
             database.WriteTime(start!.Value, end, end - start!.Value - pauseTime!.Value);
 
@@ -134,6 +146,12 @@ namespace TimeTracker
 
         private void DeleteBT_Click(object sender, RoutedEventArgs e)
         {
+            var res = MessageBox.Show("Are you sure ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.OK)
+            {
+                return;
+            }
+
             timeMutex.WaitOne();
 
             start = null;
@@ -243,6 +261,8 @@ namespace TimeTracker
 
                 DataStack.Children.Add(separator);
             }
+
+            CustomerNameBox.Text = database.GetActualName;
         }
 
         private void AddManual_Click(object sender, RoutedEventArgs e)
@@ -271,11 +291,136 @@ namespace TimeTracker
                 return;
             }
 
+            var hours = int.Parse(ManualAddTimeH.Text);
+            var minutes = int.Parse(ManualAddTimeM.Text);
+
+            start = start.Value.AddHours(hours).AddMinutes(minutes);
+
             var end = start.Value.AddHours(time);
 
             database.WriteTime(start.Value, end, end - start.Value );
 
             Reload();
+        }
+
+        private void AddCustomer_Click(object sender, RoutedEventArgs e)
+        {
+            var inputBox = new InputBox();
+            inputBox.ShowDialog();
+
+            var name = inputBox.GetOutput();
+
+            database.AddCustomer(name);
+            
+            Reload();
+        }
+
+        private void ChangeCustomer_Click(object sender, RoutedEventArgs e)
+        {
+            if(start != null)
+            {
+                StopBT_Click(this, e);
+
+                if(start != null)
+                {
+                    return;
+                }
+            }
+
+            var customerBox = new CustomerChooser(database.GetCustomers(), database.GetActualName);
+            customerBox.ShowDialog();
+
+            var id = customerBox.SelectedId;
+            
+            if (id != -1)
+            {
+                database.ChangeCustomer(id);
+                Reload();
+            }
+        }
+
+        private void DeleteCustomer_Click(object sender, RoutedEventArgs e)
+        {
+            var res = MessageBox.Show("Are you shore ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.OK)
+            {
+                return;
+            }
+
+            if (!database.RemoveActualCustomer())
+            {
+                MessageBox.Show(this, "There has to be at least one customer", "WARNING", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            timeMutex.WaitOne();
+
+            start = null;
+            pauseStart = null;
+            pauseTime = null;
+
+            timeMutex.ReleaseMutex();
+
+            SteTimeLabel(null);
+
+            PauseBT.IsEnabled = false;
+            StopBT.IsEnabled = false;
+            DeleteBT.IsEnabled = false;
+            StartBT.IsEnabled = true;
+
+            Reload();
+        }
+
+        private void RenameCustomer_Click(object sender, RoutedEventArgs e)
+        {
+            var inputBox = new InputBox();
+            inputBox.ShowDialog();
+
+            var name = inputBox.GetOutput();
+
+            database.RenameActualCustomer(name);
+
+            Reload();
+        }
+
+        private void ClearCustomer_Click(object sender, RoutedEventArgs e)
+        {
+            var res = MessageBox.Show("Are you shore ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (res == MessageBoxResult.OK)
+            {
+                database.ClearDBUser();
+                Reload();
+            }
+        }
+
+        private void Hcheck(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(ManualAddTimeH.Text, out var h))
+            {
+                if (h < 0 || h >= 24)
+                {
+                    ManualAddTimeH.Text ="0";
+                }
+
+                return;
+            }
+
+            ManualAddTimeH.Text = "0";
+        }
+
+        private void Mcheck(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(ManualAddTimeM.Text, out var m))
+            {
+                if (m < 0 || m >= 60)
+                {
+                    ManualAddTimeM.Text = "0";
+                }
+
+                return;
+            }
+
+            ManualAddTimeM.Text = "0";
         }
     }
 
@@ -310,7 +455,7 @@ namespace TimeTracker
 
             button.Click += (s, i) =>
             {
-                var res = MessageBox.Show("Are you shore ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                var res = MessageBox.Show("Are you sure ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
                 if (res == MessageBoxResult.OK)
                 {
                     delete(info.ID);

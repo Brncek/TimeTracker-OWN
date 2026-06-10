@@ -1,0 +1,22 @@
+﻿<Window x:Class="TimeTracker.CustomerChooser"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimeTracker"
+        mc:Ignorable="d"
+        Title="CustomerChooser" Height="300" Width="300" ResizeMode="CanMinimize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        
+        <TextBlock FontSize="20" FontWeight="DemiBold" HorizontalAlignment="Center" Margin="0,0,0,5">Customers</TextBlock>
+        <GroupBox Grid.Row="1" >
+            <ScrollViewer  Margin="2,5,2,2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                <StackPanel x:Name="Customers"></StackPanel>
+            </ScrollViewer>
+        </GroupBox>
+    </Grid>
+</Window>
