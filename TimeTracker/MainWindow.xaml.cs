@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Security.AccessControl;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -185,7 +186,7 @@ namespace TimeTracker
                 return;
             }
 
-            var data = database.GetInTime(start.Value, end.Value);
+            var data = database.GetInTime(start.Value, end.Value.AddDays(1));
 
             if (data.Count == 0)
             {
@@ -250,6 +251,17 @@ namespace TimeTracker
 
             var data = database.GetAll();
 
+            ManualAddDate.SelectedDate = DateTime.Now;
+
+            if (data.Count > 0)
+            {
+                var maxDate = data.Select(i => i.Start.Date).Max();
+                var minDate = data.Select(i => i.End.Date).Min();
+
+                ExportDateStart.SelectedDate = minDate;
+                ExportDateEnd.SelectedDate = maxDate;
+            }
+
             data.Reverse();
 
             double sumTime = 0;
@@ -268,7 +280,12 @@ namespace TimeTracker
                 DataStack.Children.Add(separator);
             }
 
-            CustomerNameBox.Text = database.GetActualName;
+            var name = database.GetActualName;
+
+            CustomerNameBox.Text = name;
+            Archive_CustomerNameBox.Text = name;
+            Archive_Detail_CustomerNameBox.Text = name;
+
             TimeSumBox.Text = $"{sumTime.ToString("F2").Replace(",", ".")}";
         }
 
@@ -395,9 +412,67 @@ namespace TimeTracker
             var res = MessageBox.Show("Are you shore ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
             if (res == MessageBoxResult.OK)
             {
-                database.ClearDBUser();
+                database.ClearTimeDBUser();
                 Reload();
             }
+        }
+
+        public void Add_To_Archive_CLick(object sender, RoutedEventArgs e)
+        {
+            var timeInfos = database.GetAll();
+
+            ArchiveDatePicker datePicker;
+            
+            if (timeInfos.Count > 0)
+            {
+                var maxDate = timeInfos.Select(i => i.Start.Date).Max();
+                var minDate = timeInfos.Select(i => i.End.Date).Min();
+                datePicker = new ArchiveDatePicker(minDate, maxDate);
+            }
+            else
+            {
+                datePicker = new ArchiveDatePicker();
+            }
+
+            datePicker.ShowDialog();
+
+            if (!datePicker.Succesfule) return;
+
+            var data = database.GetInTime(datePicker.Start!.Value, datePicker.End!.Value.AddDays(1));
+
+            database.SaveToArchive(data, datePicker.Note);
+
+        }
+
+        public void Open_Archive_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.Visibility = Visibility.Collapsed;
+            ArchivePage.Visibility = Visibility.Visible;
+            ReloadArchive();
+        }
+
+        public void Close_Archive_Click(object sender, RoutedEventArgs e)
+        {
+            ArchivePage.Visibility = Visibility.Collapsed;
+            MainPage.Visibility = Visibility.Visible;
+        }
+
+        public void Delete_Archive_Click(object sender, RoutedEventArgs e)
+        {
+            var res = MessageBox.Show("Are you shore ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+            if (res != MessageBoxResult.OK)
+            {
+                return;
+            }
+            
+            database.DeleteArchiveOfUser();
+            ReloadArchive();
+        }
+
+        public void Close_Archive_Detail_Click(object sender, RoutedEventArgs e)
+        {
+            ArchiveDetailPage.Visibility = Visibility.Collapsed;
+            ArchivePage.Visibility = Visibility.Visible;
         }
 
         private void Hcheck(object sender, RoutedEventArgs e)
@@ -429,11 +504,55 @@ namespace TimeTracker
 
             ManualAddTimeM.Text = "0";
         }
+
+        private void ReloadArchive()
+        {
+            var data = database.GetArchiveInfos();
+
+            ArchivePanel.Children.Clear();
+
+            data = data.OrderBy(d => d.ID).ToList();
+
+            foreach (var item in data)
+            {
+                var separator = new Separator();
+                separator.Margin = new Thickness(2);
+
+                ArchivePanel.Children.Add(separator);
+
+                Action<int> deleteAction = (index) =>
+                {
+                    database.DeleteArchiveInfo(index);
+                    ReloadArchive();
+                };
+
+                Action<ArchiveInfo> detailAction = (archiveInfo) =>
+                {
+                    ArchivePage.Visibility = Visibility.Collapsed;
+                    ArchiveDetailPage.Visibility = Visibility.Visible;
+
+                    DetailPanel.Children.Clear();
+
+                    foreach (var item in archiveInfo.timeInfos)
+                    {
+                        var sepa = new Separator();
+                        sepa.Margin = new Thickness(2);
+                        DetailPanel.Children.Add(sepa);
+
+                        var Infoline = new InfoLine(item, () => { }, (i) => { }, false);
+
+                        DetailPanel.Children.Add(Infoline);
+                    }
+                };
+
+                ArchivePanel.Children.Add(new ArchiveInfoLine(item, deleteAction, detailAction));
+            }
+        }
     }
 
     public class InfoLine : StackPanel
     {
-        public InfoLine(TimeInfo info, Action reload, Action<int> delete)
+        public InfoLine(TimeInfo info, Action reload, Action<int> delete, bool showDeleteBt = true)
         {
             Margin = new Thickness(5);
             Orientation = Orientation.Horizontal;
@@ -455,7 +574,7 @@ namespace TimeTracker
             Button button = new Button
             {
                 Margin = new Thickness(5),
-                Content = "Remove",
+                Content = "X",
                 Width = 70    
             };
 
@@ -474,8 +593,104 @@ namespace TimeTracker
             this.Children.Add(l1);
             this.Children.Add(l2);
             this.Children.Add(l3);
-            this.Children.Add(button);
+
+            if (showDeleteBt)
+                this.Children.Add(button);
         }
 
+    }
+
+    public class ArchiveInfoLine : StackPanel
+    {
+        public ArchiveInfoLine(ArchiveInfo info, Action<int> delete, Action<ArchiveInfo> detail)
+        {
+            Margin = new Thickness(5);
+            Orientation = Orientation.Horizontal;
+            VerticalAlignment = VerticalAlignment.Center;
+            Height = 35;
+
+            var l0 = new Label();
+            l0.Content = info.Note;
+            l0.Width = 100;
+            l0.VerticalAlignment = VerticalAlignment.Center;
+
+            var l1 = new Label();
+            l1.Content = info.Start.ToString("yyyy.MM.dd");
+            l1.Width = 150;
+            l1.VerticalAlignment = VerticalAlignment.Center;
+            var l2 = new Label();
+            l2.Content = info.End.ToString("yyyy.MM.dd");
+            l2.Width = 150;
+            l2.VerticalAlignment = VerticalAlignment.Center;
+            var l3 = new Label();
+
+            TimeSpan timeSum = new();
+
+            foreach (var item in info.timeInfos)
+            {
+                timeSum += item.TimeWorked;
+            }
+
+            l3.Content = timeSum.ToString(@"hh\:mm\:ss");
+            l3.Width = 100;
+            l3.VerticalAlignment = VerticalAlignment.Center;
+
+            Button button0 = new Button
+            {
+                Margin = new Thickness(5),
+                Content = "Detail",
+                Width = 70
+            };
+
+            Button button2 = new Button
+            {
+                Margin = new Thickness(5),
+                Content = "Export",
+                Width = 70
+            };
+
+            Button button = new Button
+            {
+                Margin = new Thickness(5),
+                Content = "X",
+                Width = 70
+            };
+
+            button0.Click += (s, i) =>
+            {
+                detail(info);
+            };
+
+            button.Click += (s, i) =>
+            {
+                var res = MessageBox.Show("Are you sure ?", "WARNING", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                if (res == MessageBoxResult.OK)
+                {
+                    delete(info.ID);
+                }
+            };
+
+            button2.Click += (s, i) =>
+            {
+                var saveFileDialog = new SaveFileDialog
+                {
+                    Filter = "Excel Files (*.xlsx)|*.xlsx",
+                    FileName = "report.xlsx"
+                };
+                if (saveFileDialog.ShowDialog() == true)
+                {
+                    string path = saveFileDialog.FileName;
+                    XLSXPrinter.Export(path, info.timeInfos);
+                }
+            };
+
+            this.Children.Add(l0);
+            this.Children.Add(l1);
+            this.Children.Add(l2);
+            this.Children.Add(l3);
+            this.Children.Add(button0);
+            this.Children.Add(button2);
+            this.Children.Add(button);
+        }
     }
 }
