@@ -410,7 +410,10 @@ namespace TimeTracker
             var conn = GetConnection();
 
             var command = conn.CreateCommand();
-            command.CommandText = "SELECT ID FROM ARCHIVEINFO";
+            command.CommandText = "SELECT ID FROM ARCHIVEINFO WHERE cnum = @CNUM";
+
+            var param = new SqliteParameter("@CNUM", actualCustomerId);
+            command.Parameters.Add(param);
 
             var reader = command.ExecuteReader();
             
